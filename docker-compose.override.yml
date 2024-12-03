@@ -1,0 +1,11 @@
+services:
+
+  server:
+    build:
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./src:/app/src
+    ports:
+      - "15678:5678" # debugger
+    environment:
+      - "LOG_LEVEL=DEBUG"

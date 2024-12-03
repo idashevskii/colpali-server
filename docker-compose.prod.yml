@@ -1,0 +1,9 @@
+services:
+  server:
+    restart: 'no'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]

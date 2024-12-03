@@ -1,0 +1,18 @@
+services:
+  server:
+    build:
+      context: ./
+      network: host
+    restart: always
+    ports:
+      - 9001:3000
+    volumes:
+      - ./models/huggingface/:/root/.cache/huggingface/
+      - ./models/torch:/root/.cache/torch/
+    environment:
+      - MODEL_NAME=$MODEL_NAME
+    logging:
+      options:
+        max-size: "256k"
+        max-file: "1"
+      driver: json-file

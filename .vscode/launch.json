@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 15678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/app"
+        },
+        {
+          "localRoot": "${workspaceFolder}/.venv/lib/python3.12/site-packages",
+          "remoteRoot": "/usr/local/lib/python3.12/site-packages"
+        }
+      ]
+    }
+  ]
+}

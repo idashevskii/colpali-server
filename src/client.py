@@ -52,7 +52,7 @@ class ColpaliClient:
         for n in range(3):
             try:
                 res = self.http.post(endpoint, json=payload)
-                httpx.raise_for_status()
+                res.raise_for_status()
                 return res.json()
             except:
                 logger.exception(f"Attempt {n=} failed")

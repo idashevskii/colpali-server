@@ -73,7 +73,7 @@ class ScoreRequestDto(BaseModel):
 
 
 class ScoreResponseDto(BaseModel):
-    score: float
+    scores: List[float]
 
 
 def create_embeddings(batch: BatchFeature | BatchEncoding):
@@ -103,9 +103,9 @@ def process_images(body: ProcessImagesRequestDto) -> ProcessQueryResponseDto:
 @app.post("/score")
 def calc_score(body: ScoreRequestDto) -> ScoreResponseDto:
     return ScoreResponseDto(
-        score=processor.score_multi_vector(
+        scores=processor.score_multi_vector(
             torch.FloatTensor(body.heystack_batch), torch.FloatTensor(body.needle_batch)
-        ).item()
+        ).cpu().float().numpy().tolist()
     )
 
 

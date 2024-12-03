@@ -39,14 +39,14 @@ class ColpaliClient:
 
     def score(
         self, heystack_batch: BatchEmbeddings, needle_batch: BatchEmbeddings
-    ) -> float:
+    ) -> List[float]:
         return self.__request(
             "/score",
             {
                 "heystack_batch": heystack_batch,
                 "needle_batch": needle_batch,
             },
-        )['score']
+        )['scores']
 
     def __request(self, endpoint: str, payload: Any) -> Any:
         for n in range(3):

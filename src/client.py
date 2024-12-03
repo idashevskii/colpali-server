@@ -39,7 +39,7 @@ class ColpaliClient:
 
     def score(
         self, heystack_batch: BatchEmbeddings, needle_batch: BatchEmbeddings
-    ) -> List[float]:
+    ) -> List[List[float]]:
         return self.__request(
             "/score",
             {

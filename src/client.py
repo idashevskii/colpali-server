@@ -27,7 +27,7 @@ class ColpaliClient:
             {
                 "queries": queries,
             },
-        )['embedding_batches']
+        )["embedding_batches"]
 
     def process_images(self, images: List[bytes]):
         return self.__request(
@@ -35,7 +35,7 @@ class ColpaliClient:
             {
                 "images": [base64.b64encode(img).decode("ascii") for img in images],
             },
-        )['embedding_batches']
+        )["embedding_batches"]
 
     def score(
         self, heystack_batch: BatchEmbeddings, needle_batch: BatchEmbeddings
@@ -46,7 +46,21 @@ class ColpaliClient:
                 "heystack_batch": heystack_batch,
                 "needle_batch": needle_batch,
             },
-        )['scores']
+        )["scores"]
+
+    def interpret(
+        self,
+        image: bytes,
+        query: str,
+    ) -> bytes:
+        res = self.__request(
+            "/interpret",
+            {
+                "query": query,
+                "image": base64.b64encode(image).decode("ascii"),
+            },
+        )["image"]
+        return base64.b64decode(res)
 
     def __request(self, endpoint: str, payload: Any) -> Any:
         for n in range(3):

@@ -10,6 +10,8 @@ from pydantic import BaseModel
 import base64
 from colpali_engine.models import ColQwen2, ColQwen2Processor, ColPali, ColPaliProcessor
 from transformers import BatchEncoding, BatchFeature, PreTrainedModel
+import gc
+from .interpretability import create_interpret_image
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
@@ -34,7 +36,7 @@ else:
     raise ValueError(f"Can not detect model family {model_name=}")
 
 
-local_files_only = True
+local_files_only = False
 
 
 model = model_class.from_pretrained(
@@ -67,6 +69,15 @@ class ProcessImagesRequestDto(BaseModel):
     images: List[str]
 
 
+class InterpretRequestDto(BaseModel):
+    image: str
+    query: str
+
+
+class InterpretResponseDto(BaseModel):
+    image: str
+
+
 class ScoreRequestDto(BaseModel):
     heystack_batch: BatchEmbeddings
     needle_batch: BatchEmbeddings
@@ -83,9 +94,28 @@ def create_embeddings(batch: BatchFeature | BatchEncoding):
     return embeddings.cpu().float().numpy().tolist()
 
 
+@app.post("/interpret")
+def interpret(body: InterpretRequestDto) -> InterpretResponseDto:
+    image = cast(Image.Image, Image.open(BytesIO(base64.b64decode(body.image))))
+    intr_image = create_interpret_image(
+        image=image,
+        query=body.query,
+        processor=processor,
+        model=model,
+    )
+
+    bytes_io = BytesIO()
+    intr_image.save(bytes_io, format="JPEG", subsampling=0, quality=80)
+    img_bytes = bytes_io.getvalue()
+
+    gc.collect()
+    return InterpretResponseDto(image=base64.b64encode(img_bytes).decode("ascii"))
+
+
 @app.post("/process-queries")
 def process_queries(body: ProcessQueryRequestDto) -> ProcessQueryResponseDto:
     batch_queries = processor.process_queries(body.queries).to(model.device)
+    gc.collect()
     return ProcessQueryResponseDto(embedding_batches=create_embeddings(batch_queries))
 
 
@@ -97,20 +127,17 @@ def process_images(body: ProcessImagesRequestDto) -> ProcessQueryResponseDto:
     ]
 
     batch_queries = processor.process_images(pil_images).to(model.device)
+    gc.collect()
     return ProcessQueryResponseDto(embedding_batches=create_embeddings(batch_queries))
 
 
 @app.post("/score")
 def calc_score(body: ScoreRequestDto) -> ScoreResponseDto:
-    return ScoreResponseDto(
-        scores=processor.score_multi_vector(
-            torch.FloatTensor(body.heystack_batch), torch.FloatTensor(body.needle_batch)
-        )
-        .cpu()
-        .float()
-        .numpy()
-        .tolist()
+    tensor = processor.score_multi_vector(
+        torch.FloatTensor(body.heystack_batch), torch.FloatTensor(body.needle_batch)
     )
+    scores = tensor.cpu().float().numpy().tolist()
+    return ScoreResponseDto(scores=scores)
 
 
 @app.get("/")
